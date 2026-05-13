@@ -13,6 +13,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# OmG state
+.omg/
+
 # Output files
 *.hwpx
 !scripts/*.hwpx
