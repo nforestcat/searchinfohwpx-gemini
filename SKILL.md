@@ -52,20 +52,20 @@ description: "주제별 주간동향 HWPX 보고서 자동 생성. 서브에이�
 
 | 작업명 (Sub-agent) | 검색 타겟 및 지침 |
 |:---|:---|
-| **paper-searcher** | arXiv, Semantic Scholar, Google Scholar 등. 최신 논문/프리프린트 중심. |
-| **news-searcher** | 주요 기술 매체 및 공식 보도자료. 동향의 주체(기업/기관) 식별에 집중. |
+| **paper-searcher** | arXiv, ScienceDirect, RSC, ACS, MDPI 등. **연구 수행 기관(Affiliation)**을 식별하여 `source` 필드에 '기관명 (학술지명)' 형식으로 기재. |
+| **news-searcher** | 주요 기술 매체 및 공식 보도자료. 동향의 주체(기업) 식별에 집중. |
 | **patent-searcher** | Google Patents 등 최신 특허. 출원인 정보를 `source` 필드에 매핑. |
 
 **서브에이전트 전달 JSON 포맷:**
 ```json
 [
   {
-    "source": "기업/기관명",
+    "source": "연구기관(학술지) 또는 기업명",
     "title_en": "Original English Title",
     "title": "한국어 번역 제목",
     "date": "YYYY-MM-DD",
-    "url": "Source URL",
-    "summary": "한국어 요약 (명사형/음슴체 종결)",
+    "url": "Direct Detailed URL (DOI/Article Page)",
+    "summary": "한국어 요약 (최소 3-4문장. 첫 문장은 핵심 요약, 이후는 기술적/비즈니스 상세 내용)",
     "type": "paper|news|patent"
   }
 ]
@@ -91,9 +91,9 @@ description: "주제별 주간동향 HWPX 보고서 자동 생성. 서브에이�
 
 로컬의 Python 스크립트를 `run_shell_command`로 순차 실행한다. 환경 변수 `PYTHONUTF8=1`을 반드시 접두어로 사용한다.
 
-1. **빌드**: `scripts/build_hwpx.py` 실행
+1. **빌드**: `scripts/build_hwpx.py` 실행 (내부적으로 `hp:linesegarray`를 제거하여 자동 레이아웃 보장)
    ```bash
-   PYTHONUTF8=1 python "scripts/build_hwpx.py" --template "{template}" --output "{output}" --data "_workspace/processed_items.json"
+   PYTHONUTF8=1 python "scripts/build_hwpx.py" --template "{template}" --output "{output}" --data "_workspace/processed_items.json" --today "YY.MM.DD" --title "동적 제목"
    ```
 2. **네임스페이스 수정**: `scripts/fix_namespaces.py` 실행
 3. **유효성 검증**: `scripts/validate.py` 실행
@@ -106,7 +106,12 @@ description: "주제별 주간동향 HWPX 보고서 자동 생성. 서브에이�
 
 ## 핵심 지침 (Operational Rules)
 
-1. **병렬 실행**: Phase 2의 검색 단계에서 도구의 병렬 실행 능력을 최대한 활용하여 응답 시간을 단축한다.
-2. **데이터 품질**: `summary`는 반드시 명사형/음슴체(~함, ~임, ~달성)로 작성하며, `source` 필드에는 단순 언론사가 아닌 기술 동향의 실제 주체(회사/연구소)를 명시한다.
-3. **오류 처리**: 스크립트 실행 실패 시 에러 메시지를 분석하여 가능한 경우 수정한 뒤 재시도한다.
-4. **인코딩 보장**: 모든 Shell 명령 실행 시 `PYTHONUTF8=1`을 명시하여 한글 처리 오류를 방지한다.
+1. **병렬 실행**: Phase 2의 검색 단계에서 도구의 병렬 실행 능력을 최대한 활용한다.
+2. **데이터 품질**: 
+   - `source`: 단순 언론사/출판사가 아닌 기술 동향의 실제 주체(연구소/회사)를 명시한다. 논문은 '기관명 (저널명)' 형식을 권장한다.
+   - `url`: 홈페이지 주소가 아닌, 해당 정보의 **상세 페이지(DOI 링크 등) 다이렉트 주소**를 반드시 수집한다.
+   - `summary`: 반드시 명사형/음슴체(~함, ~임, ~달성)로 작성하되, 양식의 '상세설명' 칸을 채울 수 있도록 **3문장 이상의 충분한 분량**을 확보한다.
+3. **사실 확인 (Fact-Check)**: 존재하지 않는 가공된 링크나 허위 사실이 포함되지 않도록 검색 결과를 엄격히 검증한다.
+4. **오류 처리**: 스크립트 실행 실패 시 에러 메시지를 분석하여 가능한 경우 수정한 뒤 재시도한다.
+5. **레이아웃 보장**: 고정된 줄 정보(`hp:linesegarray`)를 제거하여 HWP 뷰어에서 자간/장평이 뭉치지 않고 자동 줄바꿈되도록 한다.
+6. **인코딩 보장**: 모든 Shell 명령 실행 시 `PYTHONUTF8=1`을 명시하여 한글 처리 오류를 방지한다.

@@ -19,3 +19,7 @@ Thumbs.db
 # Output files
 *.hwpx
 !scripts/*.hwpx
+*.pdf
+.gemini/
+reports/
+search-info-hwpx/
